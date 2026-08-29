@@ -187,24 +187,21 @@ app.use((err, req, res, next) => {
 // =====================================================
 // START SERVER
 // =====================================================
+
+  
 async function start() {
-  // Start the HTTP server FIRST so Render detects the port
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Task API running on port ${PORT}`);
-    console.log(`Health check available at /health`);
     console.log(`Swagger UI available at /docs`);
   });
 
-  // Initialize database after server starts
   try {
     console.log('Initializing database...');
     await taskService.init();
     console.log('Database initialized successfully.');
   } catch (err) {
-    console.error('Database initialization failed:');
-    console.error(err);
+    console.error('Database initialization failed:', err);
   }
 }
-
 
 start();
