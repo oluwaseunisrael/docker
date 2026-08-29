@@ -1,4 +1,4 @@
-```json
+
 {
   "name": "todo-api",
   "version": "1.0.0",
@@ -17,4 +17,3 @@
     "swagger-ui-express": "^5.0.1"
   }
 }
-```
