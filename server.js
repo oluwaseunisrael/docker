@@ -1,4 +1,3 @@
-```javascript
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const openapiSpec = require('./openapi.json');
@@ -208,14 +207,14 @@ async function start() {
       );
     }
 
-    // Initialize database BEFORE starting the server
+    // Initialize database first
     console.log('Initializing database...');
 
     await taskService.init();
 
     console.log('Database initialized successfully.');
 
-    // Start server after database is ready
+    // Start server
     app.listen(PORT, '0.0.0.0', () => {
       console.log('=================================');
       console.log(`Task API running on 0.0.0.0:${PORT}`);
@@ -235,4 +234,3 @@ async function start() {
 }
 
 start();
-```
