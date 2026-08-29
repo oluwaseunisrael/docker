@@ -1,7 +1,7 @@
 // This is the ONLY line that names a specific storage technology.
 // Swapping Postgres for something else means changing this one require —
 // server.js and everything below stays exactly the same.
-const repository = require('../repositories/postgresTaskRepository');
+const repository = require('./postgresTaskRepository');
 
 class ValidationError extends Error {}
 class NotFoundError extends Error {}
