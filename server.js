@@ -5,8 +5,6 @@ const taskService = require('./taskService');
 
 const app = express();
 
-// Render provides PORT through environment variables.
-// Locally, it will use port 3000.
 const PORT = process.env.PORT || 10000;
 
 // Middleware
@@ -190,17 +188,28 @@ app.use((err, req, res, next) => {
 
   
 async function start() {
-  const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Task API running on port ${PORT}`);
-    console.log(`Swagger UI available at /docs`);
-  });
-
   try {
+    console.log('Starting Task API...');
+    console.log('PORT:', process.env.PORT);
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Task API running on 0.0.0.0:${PORT}`);
+      console.log(`Swagger UI available at /docs`);
+    });
+
     console.log('Initializing database...');
+
     await taskService.init();
+
     console.log('Database initialized successfully.');
   } catch (err) {
-    console.error('Database initialization failed:', err);
+    console.error('=================================');
+    console.error('APPLICATION STARTUP ERROR');
+    console.error('=================================');
+    console.error(err);
+    console.error(err.stack);
+    process.exit(1);
   }
 }
 
