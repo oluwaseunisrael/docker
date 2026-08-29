@@ -1,6 +1,6 @@
-const pool = require('../db/pool');
+const pool = require('./pool');
 
-// Repository interface (used by services/taskService.js):
+// Repository interface (used by taskService.js):
 //   findAll({ done, search })  -> Task[]
 //   findById(id)               -> Task | null
 //   create(title)              -> Task
@@ -10,10 +10,6 @@ const pool = require('../db/pool');
 //   countDone()                 -> number
 //   seedIfEmpty()               -> void
 //   resetToSeed()                -> Task[]
-//
-// Any other storage (in-memory, SQLite, MongoDB, ...) can implement this same
-// shape and be swapped in via services/taskService.js without touching
-// server.js or this file's callers.
 
 function toTask(row) {
   return { id: row.id, title: row.title, done: row.done };
@@ -85,7 +81,21 @@ async function countDone() {
   return Number(rows[0].count);
 }
 
+async function ensureSchema() {
+  // init.sql only runs automatically for a fresh Docker Postgres container.
+  // Managed/hosted Postgres (Render, etc.) never sees that file, so create
+  // the table here too if it doesn't already exist — safe to run every time.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      done BOOLEAN NOT NULL DEFAULT FALSE
+    )
+  `);
+}
+
 async function seedIfEmpty() {
+  await ensureSchema();
   const total = await countTotal();
   if (total > 0) return;
 
@@ -110,6 +120,7 @@ module.exports = {
   remove,
   countTotal,
   countDone,
+  ensureSchema,
   seedIfEmpty,
   resetToSeed,
 };
