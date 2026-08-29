@@ -4,24 +4,47 @@ const openapiSpec = require('./openapi.json');
 const taskService = require('./services/taskService');
 
 const app = express();
+
+// Render provides PORT through environment variables.
+// Locally, it will use port 3000.
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.json());
 
-// ---- root + health ----
+// =====================================================
+// ROOT + HEALTH CHECK
+// =====================================================
+
 app.get('/', (req, res) => {
   res.json({
     name: 'Task API',
     version: '1.0',
-    endpoints: ['/tasks'],
+    status: 'running',
+    endpoints: [
+      'GET /tasks',
+      'GET /tasks/:id',
+      'POST /tasks',
+      'PUT /tasks/:id',
+      'DELETE /tasks/:id',
+      'GET /stats',
+      'POST /reset',
+      'GET /health',
+      'GET /docs'
+    ]
   });
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({
+    status: 'ok'
+  });
 });
 
-// ---- Read ----
+// =====================================================
+// GET ALL TASKS
+// =====================================================
+
 app.get('/tasks', async (req, res, next) => {
   try {
     const tasks = await taskService.listTasks(req.query);
@@ -31,86 +54,166 @@ app.get('/tasks', async (req, res, next) => {
   }
 });
 
+// =====================================================
+// GET SINGLE TASK
+// =====================================================
+
 app.get('/tasks/:id', async (req, res, next) => {
   try {
-    const task = await taskService.getTask(Number(req.params.id));
+    const task = await taskService.getTask(
+      Number(req.params.id)
+    );
+
     res.json(task);
   } catch (err) {
     next(err);
   }
 });
 
-// ---- Create ----
+// =====================================================
+// CREATE TASK
+// =====================================================
+
 app.post('/tasks', async (req, res, next) => {
   try {
-    const task = await taskService.createTask(req.body || {});
+    const task = await taskService.createTask(
+      req.body || {}
+    );
+
     res.status(201).json(task);
   } catch (err) {
     next(err);
   }
 });
 
-// ---- Update & Delete ----
+// =====================================================
+// UPDATE TASK
+// =====================================================
+
 app.put('/tasks/:id', async (req, res, next) => {
   try {
-    const task = await taskService.updateTask(Number(req.params.id), req.body || {});
+    const task = await taskService.updateTask(
+      Number(req.params.id),
+      req.body || {}
+    );
+
     res.json(task);
   } catch (err) {
     next(err);
   }
 });
 
+// =====================================================
+// DELETE TASK
+// =====================================================
+
 app.delete('/tasks/:id', async (req, res, next) => {
   try {
-    await taskService.deleteTask(Number(req.params.id));
+    await taskService.deleteTask(
+      Number(req.params.id)
+    );
+
     res.status(204).send();
   } catch (err) {
     next(err);
   }
 });
 
-// ---- Extras ----
+// =====================================================
+// STATISTICS
+// =====================================================
+
 app.get('/stats', async (req, res, next) => {
   try {
-    res.json(await taskService.getStats());
+    const stats = await taskService.getStats();
+
+    res.json(stats);
   } catch (err) {
     next(err);
   }
 });
+
+// =====================================================
+// RESET TASKS
+// =====================================================
 
 app.post('/reset', async (req, res, next) => {
   try {
     const tasks = await taskService.resetTasks();
-    res.json({ status: 'reset', tasks });
+
+    res.json({
+      status: 'reset',
+      tasks
+    });
   } catch (err) {
     next(err);
   }
 });
 
-// ---- Swagger UI ----
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
+// =====================================================
+// SWAGGER DOCUMENTATION
+// =====================================================
 
-// ---- Error handling: translate service errors into status codes ----
+app.use(
+  '/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(openapiSpec)
+);
+
+// =====================================================
+// ERROR HANDLING
+// =====================================================
+
 app.use((err, req, res, next) => {
+  console.error('Application error:', err);
+
   if (err instanceof taskService.ValidationError) {
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({
+      error: err.message
+    });
   }
+
   if (err instanceof taskService.NotFoundError) {
-    return res.status(404).json({ error: err.message });
+    return res.status(404).json({
+      error: err.message
+    });
   }
-  console.error(err);
-  res.status(500).json({ error: 'Internal server error' });
+
+  res.status(500).json({
+    error: 'Internal server error'
+  });
 });
+
+// =====================================================
+// START SERVER
+// =====================================================
 
 async function start() {
-  await taskService.init(); // seeds the 3 example tasks if the table is empty
-  app.listen(PORT, () => {
-    console.log(`Task API running at http://localhost:${PORT}`);
-    console.log(`Swagger UI at http://localhost:${PORT}/docs`);
-  });
-}
+  try {
+    console.log('Starting Task API...');
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 
-start().catch((err) => {
-  console.error('Failed to start server:', err.message);
-  process.exit(1);
+    // Initialize database and seed example tasks
+    console.log('Initializing database...');
+
+    await taskService.init();
+
+    console.log('Database initialized successfully.');
+
+    // Listen on all network interfaces.
+    // This is important when running inside Docker/Render.
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Task API running on port ${PORT}`);
+      console.log(`Health check: /health`);
+      console.log(`Swagger UI: /docs`);
+    });
+
+  } catch (err) {
+    console.error('Failed to start server:');
+    console.error(err);
+
+    process.exit(1);
+  }
 });
+
+start();
