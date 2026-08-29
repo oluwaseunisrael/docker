@@ -1,7 +1,7 @@
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const openapiSpec = require('./openapi.json');
-const taskService = require('./services/taskService');
+const taskService = require('./taskService');
 
 const app = express();
 
