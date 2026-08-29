@@ -187,33 +187,24 @@ app.use((err, req, res, next) => {
 // =====================================================
 // START SERVER
 // =====================================================
-
 async function start() {
+  // Start the HTTP server FIRST so Render detects the port
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Task API running on port ${PORT}`);
+    console.log(`Health check available at /health`);
+    console.log(`Swagger UI available at /docs`);
+  });
+
+  // Initialize database after server starts
   try {
-    console.log('Starting Task API...');
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-
-    // Initialize database and seed example tasks
     console.log('Initializing database...');
-
     await taskService.init();
-
     console.log('Database initialized successfully.');
-
-    // Listen on all network interfaces.
-    // This is important when running inside Docker/Render.
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Task API running on port ${PORT}`);
-      console.log(`Health check: /health`);
-      console.log(`Swagger UI: /docs`);
-    });
-
   } catch (err) {
-    console.error('Failed to start server:');
+    console.error('Database initialization failed:');
     console.error(err);
-
-    process.exit(1);
   }
-});
+}
+
 
 start();
