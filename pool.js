@@ -1,8 +1,9 @@
 require('dotenv').config();
+
 const { Pool } = require('pg');
 
 if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL is not set — check your .env file (see .env.example)');
+  throw new Error('DATABASE_URL is not set');
 }
 
 const pool = new Pool({
