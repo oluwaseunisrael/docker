@@ -1,3 +1,4 @@
+```javascript
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const openapiSpec = require('./openapi.json');
@@ -5,9 +6,12 @@ const taskService = require('./taskService');
 
 const app = express();
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
-// Middleware
+// =====================================================
+// MIDDLEWARE
+// =====================================================
+
 app.use(express.json());
 
 // =====================================================
@@ -186,31 +190,49 @@ app.use((err, req, res, next) => {
 // START SERVER
 // =====================================================
 
-  
 async function start() {
   try {
+    console.log('=================================');
     console.log('Starting Task API...');
-    console.log('PORT:', process.env.PORT);
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    console.log('=================================');
 
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Task API running on 0.0.0.0:${PORT}`);
-      console.log(`Swagger UI available at /docs`);
-    });
+    console.log('PORT:', PORT);
+    console.log(
+      'DATABASE_URL exists:',
+      !!process.env.DATABASE_URL
+    );
 
+    if (!process.env.DATABASE_URL) {
+      throw new Error(
+        'DATABASE_URL environment variable is not set'
+      );
+    }
+
+    // Initialize database BEFORE starting the server
     console.log('Initializing database...');
 
     await taskService.init();
 
     console.log('Database initialized successfully.');
+
+    // Start server after database is ready
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log('=================================');
+      console.log(`Task API running on 0.0.0.0:${PORT}`);
+      console.log(`Swagger UI available at /docs`);
+      console.log('=================================');
+    });
+
   } catch (err) {
     console.error('=================================');
     console.error('APPLICATION STARTUP ERROR');
     console.error('=================================');
     console.error(err);
     console.error(err.stack);
+
     process.exit(1);
   }
 }
 
 start();
+```
